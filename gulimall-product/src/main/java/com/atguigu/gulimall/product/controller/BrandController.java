@@ -1,13 +1,11 @@
 package com.atguigu.gulimall.product.controller;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
-import com.atguigu.common.validGroup.AddGroup;
-import com.atguigu.common.validGroup.UpdateGroup;
+import com.atguigu.common.validation.AddGroup;
+import com.atguigu.common.validation.UpdateGroup;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,8 +17,6 @@ import com.atguigu.gulimall.product.entity.BrandEntity;
 import com.atguigu.gulimall.product.service.BrandService;
 import com.atguigu.common.utils.PageUtils;
 import com.atguigu.common.utils.R;
-
-import javax.validation.Valid;
 
 
 /**
@@ -75,7 +71,7 @@ public class BrandController {
     @RequestMapping("/update")
     //@RequiresPermissions("product:brand:update")
     public R update(@Validated(value = {UpdateGroup.class}) @RequestBody BrandEntity brand){
-		brandService.updateById(brand);
+		brandService.updateByIdDetail(brand);
 
         return R.ok();
     }

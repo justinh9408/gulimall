@@ -1,12 +1,13 @@
 package com.atguigu.gulimall.product.entity;
 
-import com.atguigu.common.validGroup.AddGroup;
-import com.atguigu.common.validGroup.UpdateGroup;
+import com.atguigu.common.validation.AddGroup;
+import com.atguigu.common.validation.InValues;
+import com.atguigu.common.validation.UpdateGroup;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.io.Serializable;
-import java.util.Date;
+
 import lombok.Data;
 
 import javax.validation.constraints.*;
@@ -53,13 +54,14 @@ public class BrandEntity implements Serializable {
 	/**
 	 * 显示状态[0-不显示；1-显示]
 	 */
+	@InValues(values = {1,0},groups = {AddGroup.class})
 	private Integer showStatus;
 
 	/**
 	 * 检索首字母
 	 */
 	@NotEmpty(groups = {AddGroup.class})
-	@Pattern(regexp = "/^[a-zA-Z]$/", groups = {AddGroup.class, UpdateGroup.class})
+	@Pattern(regexp = "^[a-zA-Z]$", groups = {AddGroup.class, UpdateGroup.class})
 	private String firstLetter;
 
 	/**

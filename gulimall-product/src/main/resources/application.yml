@@ -1,6 +1,10 @@
 server:
   port: 10000
 
+logging:
+  level:
+    com.atguigu.gulimall.product: DEBUG
+
 spring:
   datasource:
     username: root
@@ -13,6 +17,8 @@ spring:
         server-addr: 127.0.0.1:8848
   application:
     name: gulimall-product
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
 
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml

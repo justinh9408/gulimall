@@ -30,10 +30,10 @@ public class ExceptionControlerAdvice {
     }
 
 
-    @ExceptionHandler(Throwable.class)
-    public R exception(Throwable throwable) {
-        log.error("未知错误: {}", throwable.getLocalizedMessage());
-
-        return R.error(ExceptionCode.UNKNOWN_EXCEPTION.getCode(), ExceptionCode.UNKNOWN_EXCEPTION.getMsg());
-    }
+//    @ExceptionHandler(Throwable.class)
+//    public R exception(Throwable throwable) {
+//        log.error("未知错误: {}{}", throwable.getLocalizedMessage(),throwable.getCause());
+//
+//        return R.error(ExceptionCode.UNKNOWN_EXCEPTION.getCode(), ExceptionCode.UNKNOWN_EXCEPTION.getMsg());
+//    }
 }
