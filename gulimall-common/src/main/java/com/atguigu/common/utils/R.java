@@ -20,7 +20,8 @@ import java.util.Map;
  */
 public class R extends HashMap<String, Object> {
 	private static final long serialVersionUID = 1L;
-	
+
+
 	public R() {
 		put("code", 0);
 		put("msg", "success");

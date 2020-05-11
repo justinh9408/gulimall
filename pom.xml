@@ -22,6 +22,7 @@
         <module>gulimall-common</module>
         <module>gulimall-gateway</module>
         <module>third-party</module>
+        <module>gulimall-search</module>
     </modules>
 
 

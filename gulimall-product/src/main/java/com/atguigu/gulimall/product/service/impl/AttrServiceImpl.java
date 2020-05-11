@@ -245,4 +245,10 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         return Collections.EMPTY_LIST;
     }
 
+    @Override
+    public List<Long> findSearchableAttrIds(List<Long> baseAttrsIds) {
+
+        return this.baseMapper.selectSearchableAttrIds(baseAttrsIds);
+    }
+
 }
