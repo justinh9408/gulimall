@@ -14,6 +14,7 @@ import com.atguigu.gulimall.product.vo.AttrVo;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -118,6 +119,7 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         return pageUtils;
     }
 
+    @Cacheable(value = "attrInfo", key = "'attrInfo:'+#root.args[0]",sync = true)
     @Override
     public AttrRespVo getAttrInfo(Long attrId) {
         AttrRespVo attrRespVo = new AttrRespVo();

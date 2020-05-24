@@ -5,6 +5,7 @@ package com.atguigu.gulimall.search.constant;
  */
 public class EsConstant {
 
-    public static String PRODUCT_INDEX = "product";
+    public static String PRODUCT_INDEX = "new_product";
+    public static Integer PRODUCT_PAGESIZE = 2;
 
 }

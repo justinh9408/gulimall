@@ -274,7 +274,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
             if (finalStockMap == null) {
                 skuEsModel.setHasStock(true);
             } else {
-                skuEsModel.setHasStock(finalStockMap.get(sku.getSkuId()));
+                skuEsModel.setHasStock(finalStockMap.get(sku.getSkuId())==null?true:finalStockMap.get(sku.getSkuId()));
             }
 
             skuEsModel.setHotScore(0L);
@@ -292,6 +292,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
         }).collect(Collectors.toList());
 
 //        ES远程调用保存商品
+        System.out.println("es: "+collect);
         R up = searchFeignService.saveProductUp(collect);
         if (up.getCode() == 0) {
             baseMapper.updateSpuStatus(spuId, ProductConstant.StatusEnum.SPU_UP.getCode());

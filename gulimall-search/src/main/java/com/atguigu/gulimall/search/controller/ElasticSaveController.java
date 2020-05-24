@@ -25,6 +25,8 @@ public class ElasticSaveController {
     @Autowired
     ProductService productService;
 
+
+
     @PostMapping("/product")
     public R saveProductUp(@RequestBody List<SkuEsModel> models) {
 

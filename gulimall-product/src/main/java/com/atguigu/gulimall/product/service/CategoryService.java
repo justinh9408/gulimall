@@ -1,5 +1,6 @@
 package com.atguigu.gulimall.product.service;
 
+import com.atguigu.gulimall.product.vo.CatalogLv2Vo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.atguigu.common.utils.PageUtils;
 import com.atguigu.gulimall.product.entity.CategoryEntity;
@@ -25,5 +26,9 @@ public interface CategoryService extends IService<CategoryEntity> {
     Long[] findCateLogIdPath(Long catelogId);
 
     void updateCascade(CategoryEntity category);
+
+    List<CategoryEntity> findLevel1Categories();
+
+    Map<String, List<CatalogLv2Vo>> getCatalogJson();
 }
 

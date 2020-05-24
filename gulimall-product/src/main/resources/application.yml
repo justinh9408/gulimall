@@ -19,9 +19,26 @@ spring:
     name: gulimall-product
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
+  thymeleaf:
+    cache: false
+  redis:
+    host: 192.168.56.10
+    port: 6379
+  cache:
+    type: redis
+    redis:
+      time-to-live: 360000
+      key-prefix: CACHE_
+      cache-null-values: true
 
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
   global-config:
     db-config:
       id-type: auto
+
+gulimall:
+  thread:
+    core-pool-size: 20
+    max-pool-size: 100
+    keep-alive-time: 60

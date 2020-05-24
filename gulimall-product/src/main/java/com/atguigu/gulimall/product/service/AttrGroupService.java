@@ -2,6 +2,8 @@ package com.atguigu.gulimall.product.service;
 
 import com.atguigu.gulimall.product.vo.AttrGroupRelationVo;
 import com.atguigu.gulimall.product.vo.AttrGroupWithAttrsVo;
+import com.atguigu.gulimall.product.vo.ItemInfoVo;
+import com.atguigu.gulimall.product.vo.SpuAttrGroupVo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.atguigu.common.utils.PageUtils;
 import com.atguigu.gulimall.product.entity.AttrGroupEntity;
@@ -25,5 +27,7 @@ public interface AttrGroupService extends IService<AttrGroupEntity> {
     void deleteRelation(AttrGroupRelationVo[] vos);
 
     List<AttrGroupWithAttrsVo> findAttrGroupWithAttrsInCatlogId(Long catlogId);
+
+    List<SpuAttrGroupVo> findAttrGroupWithAttrsWithSpuId(Long spuId, Long catalogId);
 }
 

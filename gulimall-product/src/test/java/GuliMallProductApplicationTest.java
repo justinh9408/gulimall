@@ -2,14 +2,16 @@ import com.atguigu.gulimall.GuliMallProductApplication;
 import com.atguigu.gulimall.product.dao.AttrAttrgroupRelationDao;
 import com.atguigu.gulimall.product.entity.AttrAttrgroupRelationEntity;
 import com.atguigu.gulimall.product.entity.BrandEntity;
-import com.atguigu.gulimall.product.service.AttrService;
-import com.atguigu.gulimall.product.service.BrandService;
-import com.atguigu.gulimall.product.service.CategoryService;
+import com.atguigu.gulimall.product.service.*;
+import com.atguigu.gulimall.product.vo.SkuSaleAttrVo;
+import com.atguigu.gulimall.product.vo.SpuAttrGroupVo;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.bytebuddy.asm.Advice;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.redisson.api.RedissonClient;
+import org.redisson.client.RedisClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -35,6 +37,26 @@ public class GuliMallProductApplicationTest {
 
     @Autowired
     AttrService attrService;
+
+    @Autowired
+    RedissonClient redissonClient;
+
+    @Autowired
+    AttrGroupService attrGroupService;
+
+    @Autowired
+    SkuSaleAttrValueService skuSaleAttrValueService;
+    @Test
+    public void test() {
+        List<SkuSaleAttrVo> values = skuSaleAttrValueService.findAllAttrValuesInSpu((long) 1);
+        System.out.println(values);
+    }
+
+    @Test
+    public void testRedissonClient() {
+        System.out.println(redissonClient);
+        
+    }
 
     @Test
     public void testFindParentPath() {
