@@ -3,7 +3,7 @@ server:
 
 logging:
   level:
-    com.atguigu.gulimall.product: DEBUG
+    com.atguigu.gulimall.product: INFO
 
 spring:
   datasource:
@@ -36,6 +36,7 @@ mybatis-plus:
   global-config:
     db-config:
       id-type: auto
+
 
 gulimall:
   thread:

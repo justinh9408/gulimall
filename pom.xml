@@ -23,6 +23,7 @@
         <module>gulimall-gateway</module>
         <module>third-party</module>
         <module>gulimall-search</module>
+        <module>gulimall-auth</module>
     </modules>
 
 

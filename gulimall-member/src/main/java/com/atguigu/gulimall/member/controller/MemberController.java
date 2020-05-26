@@ -3,7 +3,12 @@ package com.atguigu.gulimall.member.controller;
 import java.util.Arrays;
 import java.util.Map;
 
+import com.atguigu.common.exception.ExceptionCode;
+import com.atguigu.gulimall.member.exception.ExistingPhoneNumException;
+import com.atguigu.gulimall.member.exception.ExistingUserNameException;
 import com.atguigu.gulimall.member.feign.CouponFeignService;
+import com.atguigu.gulimall.member.vo.MemberLoginVo;
+import com.atguigu.gulimall.member.vo.MemberRegisterVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +34,30 @@ public class MemberController {
 
     @Autowired
     CouponFeignService couponFeignService;
+
+    @PostMapping("/register")
+    public R register(@RequestBody MemberRegisterVo vo) {
+
+        try {
+            memberService.register(vo);
+        } catch (ExistingUserNameException userNameException) {
+            return R.error(ExceptionCode.USERNAME_EXIST_EXCEPTION.getCode(), ExceptionCode.USERNAME_EXIST_EXCEPTION.getMsg());
+        }catch (ExistingPhoneNumException phoneNumException){
+            return R.error(ExceptionCode.PHONE_EXIST_EXCEPTION.getCode(), ExceptionCode.PHONE_EXIST_EXCEPTION.getMsg());
+        }
+
+        return R.ok();
+    }
+
+    @PostMapping("/login")
+    public R login(@RequestBody MemberLoginVo vo) {
+        boolean login = memberService.login(vo);
+        if (!login) {
+            return R.error();
+        }
+
+        return R.ok();
+    }
 
     @GetMapping("/coupons")
     public R test() {

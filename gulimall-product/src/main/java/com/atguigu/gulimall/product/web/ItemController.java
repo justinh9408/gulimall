@@ -22,7 +22,7 @@ public class ItemController {
     @GetMapping("/{skuId}.html")
     String itemPage(@PathVariable("skuId") Long skuId, Model model) throws ExecutionException, InterruptedException {
         ItemInfoVo itemInfoVo = skuInfoService.item(skuId);
-        model.addAttribute("itemInfo", itemInfoVo);
+        model.addAttribute("item", itemInfoVo);
 
         return "item";
     }

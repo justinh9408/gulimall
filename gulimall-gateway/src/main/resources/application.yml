@@ -39,3 +39,8 @@ spring:
           uri: lb://gulimall-search
           predicates:
             - Host=search.gulimall.com
+
+        - id: auth_gulimall_route
+          uri: lb://gulimall-auth
+          predicates:
+            - Host=auth.gulimall.com
