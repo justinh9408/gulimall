@@ -24,6 +24,7 @@
         <module>third-party</module>
         <module>gulimall-search</module>
         <module>gulimall-auth</module>
+        <module>gulimall-cart</module>
     </modules>
 
 

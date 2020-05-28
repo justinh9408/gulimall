@@ -1,6 +1,9 @@
 package com.atguigu.gulimall.controller;
 
+import com.alibaba.fastjson.JSON;
+import com.atguigu.common.constant.AuthConstant;
 import com.atguigu.common.utils.R;
+import com.atguigu.common.vo.OauthMember;
 import com.atguigu.gulimall.feign.MemberFeignService;
 import com.atguigu.gulimall.vo.LoginVo;
 import com.atguigu.gulimall.vo.RegisterVo;
@@ -11,7 +14,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import sun.net.www.http.HttpClient;
 
+import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,6 +29,7 @@ public class LoginController {
 
     @Autowired
     MemberFeignService memberFeignService;
+
 
     @PostMapping("/register")
     public String register(@Valid RegisterVo vo, BindingResult result, RedirectAttributes redirectAttributes) {
@@ -50,11 +56,15 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public String login(LoginVo vo) {
+    public String login(LoginVo vo, HttpSession session) {
+//       feign请求调用会丢失请求头！！！
         R login = memberFeignService.login(vo);
         if (login.getCode() != 0) {
-            return "redirect:auth.gulimall.com/reg.html";
+            return "redirect:http://auth.gulimall.com/reg.html";
         }
+        String s = JSON.toJSONString(login.get(AuthConstant.LOGIN_USER));
+        OauthMember oauthMember = JSON.parseObject(s, OauthMember.class);
+        session.setAttribute(AuthConstant.LOGIN_USER,oauthMember);
 
         return "redirect:http://gulimall.com";
     }

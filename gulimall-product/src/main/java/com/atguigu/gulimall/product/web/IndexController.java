@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +31,7 @@ public class IndexController {
     RedissonClient redissonClient;
 
     @GetMapping({"/", "/index.html"})
-    public String indexPage(Model model) {
+    public String indexPage(Model model, HttpSession httpSession) {
         List<CategoryEntity> lv1Categories = categoryService.findLevel1Categories();
         model.addAttribute("categories", lv1Categories);
 

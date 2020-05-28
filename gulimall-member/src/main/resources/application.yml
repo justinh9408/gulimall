@@ -8,6 +8,11 @@ spring:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
+  redis:
+    host: 192.168.56.10
+    port: 6379
+  session:
+    store-type: redis
   application:
     name: gulimall-member
 

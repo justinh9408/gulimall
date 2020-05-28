@@ -1,0 +1,31 @@
+server:
+  port: 30000
+
+logging:
+  level:
+    com.atguigu.gulimall.product: INFO
+
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  application:
+    name: gulimall-cart
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+  thymeleaf:
+    cache: false
+  redis:
+    host: 192.168.56.10
+    port: 6379
+  session:
+    store-type: redis
+  cache:
+    type: redis
+    redis:
+      time-to-live: 360000
+      key-prefix: CACHE_
+      cache-null-values: true
+
+

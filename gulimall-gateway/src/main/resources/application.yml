@@ -44,3 +44,13 @@ spring:
           uri: lb://gulimall-auth
           predicates:
             - Host=auth.gulimall.com
+
+        - id: cart_gulimall_route
+          uri: lb://gulimall-cart
+          predicates:
+            - Host=cart.gulimall.com
+
+        - id: member_gulimall_route
+          uri: lb://gulimall-member
+          predicates:
+            - Host=member.gulimall.com

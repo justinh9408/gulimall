@@ -95,7 +95,7 @@
   					</b>
         <ul>
           <li>
-            <a href="http://auth.gulimall.com/login.html">你好，请登录</a>
+            <a href="http://auth.gulimall.com/login.html">你好，<b th:text="${session.member==null?'请登录!':session.member.nickname}">请登录</b></a>
           </li>
           <li>
             <a href="http://auth.gulimall.com/reg.html" class="li_2">免费注册</a>

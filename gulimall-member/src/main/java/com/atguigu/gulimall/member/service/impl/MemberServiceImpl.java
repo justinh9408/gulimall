@@ -1,13 +1,18 @@
 package com.atguigu.gulimall.member.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.atguigu.gulimall.member.exception.ExistingPhoneNumException;
 import com.atguigu.gulimall.member.exception.ExistingUserNameException;
+import com.atguigu.gulimall.member.utils.HttpUtil;
 import com.atguigu.gulimall.member.vo.MemberLoginVo;
 import com.atguigu.gulimall.member.vo.MemberRegisterVo;
+import com.atguigu.gulimall.member.vo.SocialUser;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -56,7 +61,7 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
     }
 
     @Override
-    public boolean login(MemberLoginVo vo) {
+    public MemberEntity login(MemberLoginVo vo) {
         String acc = vo.getAcc();
         MemberEntity memberEntity = this.baseMapper.selectOne(new QueryWrapper<MemberEntity>().eq("mobile", acc)
                 .or().eq("username", acc));
@@ -65,11 +70,58 @@ public class MemberServiceImpl extends ServiceImpl<MemberDao, MemberEntity> impl
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
             boolean matches = encoder.matches(password, memberEntity.getPassword());
             if (matches) {
-                return true;
+                memberEntity.setNickname(memberEntity.getUsername());
+                return memberEntity;
             }
         }
 
-        return false;
+        return null;
+    }
+
+    @Override
+    public MemberEntity login(SocialUser vo) {
+        Long uid = vo.getUid();
+        MemberEntity memberEntity = this.baseMapper.selectOne(new QueryWrapper<MemberEntity>().eq("uid", uid));
+        if (memberEntity != null) {
+//            已存在账户
+            MemberEntity update = new MemberEntity();
+            update.setId(memberEntity.getId());
+            update.setExpires_in(vo.getExpires_in());
+            update.setAccess_token(vo.getAccess_token());
+            this.baseMapper.updateById(update);
+
+            memberEntity.setExpires_in(vo.getExpires_in());
+            memberEntity.setAccess_token(vo.getAccess_token());
+
+            return memberEntity;
+
+        } else {
+//            新建账户
+            MemberEntity newMember = new MemberEntity();
+            newMember.setAccess_token(vo.getAccess_token());
+            newMember.setExpires_in(vo.getExpires_in());
+            newMember.setUid(vo.getUid());
+
+//https://api.weibo.com/2/users/show.json?uid=1913287700&access_token=2.00CXxTFCVBijpDf1d794d47b0YN137
+            HashMap<String, String > map = new HashMap<>();
+            map.put("access_token", vo.getAccess_token());
+            map.put("uid", vo.getUid().toString());
+            String result = "";
+            try {
+                String url = HttpUtil.appendQueryParams("https://api.weibo.com/2/users/show.json", map);
+                result = HttpUtil.get(url);
+            } catch (Exception e) {
+                return null;
+            }
+
+            JSONObject jsonObject = JSON.parseObject(result);
+            String  name = (String) jsonObject.get("name");
+            newMember.setNickname(name);
+
+            this.baseMapper.insert(newMember);
+            return newMember;
+        }
+
     }
 
     private void checkUserNameUnique(String userName) throws ExistingUserNameException{

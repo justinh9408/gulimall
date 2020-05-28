@@ -57,7 +57,7 @@
 							</li>
 						</ul>
 						<ul class="header_ul_right">
-							<li style="border: 0;"><a href="/item/../登录页面\index.html" class="aa">你好，请登录</a></li>
+							<li style="border: 0;"><a href="/item/../登录页面\index.html" class="aa">你好，<b th:text="${session.member==null?'请登录!':session.member.nickname}">请登录</b></a></li>
 							<li><a href="/item/../注册页面\index.html" style="color: red;">免费注册</a> |</li>
 							<li><a href="/item/javascript:;" class="aa">我的订单</a> |</li>
 							<li class="jingdong"><a href="/item/javascript:;">我的京东</a><span class="glyphicon glyphicon-menu-down">|</span>

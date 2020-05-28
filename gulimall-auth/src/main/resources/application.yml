@@ -10,3 +10,14 @@ spring:
     name: gulimall-auth
   thymeleaf:
     cache: false
+  redis:
+    host: 192.168.56.10
+    port: 6379
+  session:
+    store-type: redis
+
+gulimall:
+  oauth2:
+    appId: 3512885621
+    appSecret: 05995f8d5f8603da12c00cce9829ef6e
+
