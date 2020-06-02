@@ -33,6 +33,8 @@ public class AttrController {
     @Autowired
     ProductAttrValueService productAttrValueService;
 
+
+
     @GetMapping("/base/listforspu/{spuId}")
     public R baseAttrlistforspu(@PathVariable("spuId") Long spuId){
 

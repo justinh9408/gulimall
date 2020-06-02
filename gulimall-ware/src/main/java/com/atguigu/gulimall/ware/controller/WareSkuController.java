@@ -4,7 +4,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import com.atguigu.common.exception.ExceptionCode;
+import com.atguigu.common.exception.NotEnoughStockException;
 import com.atguigu.common.to.SkuStockTo;
+import com.atguigu.gulimall.ware.vo.LockOrderItemsVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +31,18 @@ public class WareSkuController {
     @Autowired
     private WareSkuService wareSkuService;
 
-    @GetMapping("/hasstock")
+    @PostMapping("/lockStock")
+    public R lockStock(@RequestBody LockOrderItemsVo vo) {
+        try {
+            wareSkuService.lockStock(vo);
+        } catch (NotEnoughStockException e) {
+            return R.error(ExceptionCode.NOT_ENOUGH_STOCK_EXCEPTION.getCode(), ExceptionCode.NOT_ENOUGH_STOCK_EXCEPTION.getMsg());
+        }
+
+        return R.ok();
+    }
+
+    @PostMapping("/hasstock")
     public List<SkuStockTo> getSkusHaveStock(@RequestBody List<Long> skuIds) {
 
         List<SkuStockTo> skuStockVo = wareSkuService.getSkusHaveStock(skuIds);

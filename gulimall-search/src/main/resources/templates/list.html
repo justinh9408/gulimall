@@ -1201,7 +1201,7 @@
                                 </a>
                                 <a th:each="p:${result.pageNavs}" th:text="${p}"
                                    href="#" style="border: 0;color:#ee2222;background: #fff">1</a>
-                                <a href="#" th:if="${result.pageNum<result.totalPages}">
+                                <a th:href="'/search.html?pageNum='+${result.pageNum+1}" th:if="${result.pageNum<result.totalPages}">
                                     下一页 >
                                 </a>
                             </span>
@@ -1966,7 +1966,7 @@
 
     function searchByKeyword(){
         let keyword = $("#search_input").val();
-        searchProducts('keyword',keyword);
+        searchProducts('keyWord',keyword);
     }
 </script>
 </body>

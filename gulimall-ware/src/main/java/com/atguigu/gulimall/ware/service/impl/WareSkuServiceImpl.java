@@ -1,8 +1,11 @@
 package com.atguigu.gulimall.ware.service.impl;
 
+import com.atguigu.common.exception.NotEnoughStockException;
 import com.atguigu.common.to.SkuStockTo;
 import com.atguigu.common.utils.R;
 import com.atguigu.gulimall.ware.feign.ProductFeignService;
+import com.atguigu.gulimall.ware.vo.LockOrderItemsVo;
+import com.atguigu.gulimall.ware.vo.OrderItemVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +22,7 @@ import com.atguigu.common.utils.Query;
 import com.atguigu.gulimall.ware.dao.WareSkuDao;
 import com.atguigu.gulimall.ware.entity.WareSkuEntity;
 import com.atguigu.gulimall.ware.service.WareSkuService;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 
@@ -96,5 +100,38 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
         }).collect(Collectors.toList());
 
         return skuStockVos;
+    }
+
+    @Transactional
+    @Override
+    public Boolean lockStock(LockOrderItemsVo vo) {
+        List<OrderItemVo> lockedItems = vo.getLockedItems();
+
+        for (OrderItemVo lockedItem : lockedItems) {
+            Boolean itemLocked = false;
+            List<Long> wareIds = findWareIdsHasStock(lockedItem.getSkuId());
+            if (wareIds == null || wareIds.size() == 0) {
+                throw new NotEnoughStockException(lockedItem.getSkuId());
+            }
+            for (Long wareId : wareIds) {
+//                锁库存
+                Long count = this.wareSkuDao.lockSkuStock(lockedItem.getSkuId(), wareId, lockedItem.getCount());
+                if (count == 0) {
+//                    没锁上，尝试下一个ware
+                    continue;
+                }else{
+                    itemLocked = true;
+                    break;
+                }
+            }
+            if (!itemLocked){
+                throw new NotEnoughStockException(lockedItem.getSkuId());
+            }
+        }
+        return true;
+    }
+
+    private List<Long> findWareIdsHasStock(Long skuId) {
+        return this.wareSkuDao.selectIdsHasSku(skuId);
     }
 }

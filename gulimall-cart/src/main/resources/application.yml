@@ -29,3 +29,8 @@ spring:
       cache-null-values: true
 
 
+gulimall:
+  thread:
+    core-pool-size: 20
+    max-pool-size: 100
+    keep-alive-time: 60

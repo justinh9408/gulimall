@@ -1,252 +1,218 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
-	<head>
-		<meta charset="UTF-8">
-		<title>购物车</title>
-		<link rel="icon" href="/cart/img/心04.png" type="/image/x-icon" />
-		<link rel="stylesheet" href="/cart/css/One_bdyStyle.css">
-		<link rel="stylesheet" href="/cart/css/index.css">
-		<script src="/cart/js/jquery-3.1.1.min.js" charset="utf-8"></script>
-		<link rel="stylesheet" href="/cart/css/One_mainFoot.css">
-		<link rel="stylesheet" href="/cart/css/font-awesome-4.7.0/css/font-awesome.css" />
-	</head>
-	<body>
-		<header>
-			<a name="mao1">
-				<div class="header">
+<head>
+    <meta charset="UTF-8">
+    <title>购物车</title>
+    <link rel="icon" href="/cart/img/心04.png" type="/image/x-icon"/>
+    <link rel="stylesheet" href="/cart/css/One_bdyStyle.css">
+    <link rel="stylesheet" href="/cart/css/index.css">
+    <script src="/cart/js/jquery-3.1.1.min.js" charset="utf-8"></script>
+    <link rel="stylesheet" href="/cart/css/One_mainFoot.css">
+    <link rel="stylesheet" href="/cart/css/font-awesome-4.7.0/css/font-awesome.css"/>
+</head>
+<body>
+<header>
+    <a name="mao1">
+        <div class="header">
 
-					<ul class="header-left">
-						<li>
+            <ul class="header-left">
+                <li>
 
-							<a href="/cart/">首页</a>
-						</li>
+                    <a href="http://gulimall.com">首页</a>
+                </li>
 
-					</ul>
-					<ul class="header-right">
-						<li><a href="/cart/../登录页面\index.html" style="color: red;">你好，请登录</a></li>
-						<li><a href="/cart/../注册页面\index.html">免费注册</a></li>
-						<li class="spacer"></li>
-						<li><a href="/cart/">我的订单</a></li>
-						<li class="spacer"></li>
+            </ul>
+            <ul class="header-right">
+                <li><a href="/cart/../登录页面\index.html" style="color: red;">你好，请登录</a></li>
+                <li><a href="/cart/../注册页面\index.html">免费注册</a></li>
+                <li class="spacer"></li>
+                <li><a href="/cart/">我的订单</a></li>
+                <li class="spacer"></li>
 
-					</ul>
-					<div style="clear: both;"></div>
-				</div>
+            </ul>
+            <div style="clear: both;"></div>
+        </div>
 
-			</a>
-		</header>
-
-
+    </a>
+</header>
 
 
-		<div class="one_search">
+<div class="one_search">
 
-			<div class="one_sousuo">
-				<div class="one_search_top">
-					<div class="one_top_left">
-						<a href="/cart/../" class="one_left_logo"><img src="/cart/img/logo1.jpg"></a>
-						<a href="/cart/#" class="one_left_link">购物车</a>
-					</div>
-					<div class="one_top_right">
-						<input type="text" class="one_right_txt" placeholder="" onfocus="this.placeholder=''" onblur="this.placeholder='' ">
-						<input type="button" value="搜索" class="one_right_btn">
-					</div>
-				</div>
-				<div class="one_search_load" th:if="${userId}==null">
-					<img src="/cart/img/shop_07.jpg" class="one_load_wraing">
-					<span>您还没有登录！登录后购物车的商品将保存到您账号中</span>
-					<a href="/cart/#"><input type="button" onclick="login()" value="立即登录" class="one_load_btn"></a>
-				</div>
-			</div>
-		</div>
-		<div class="One_BdyShop">
-			<div class="OneBdy_box">
-				<div class="One_tabTop">
-					<div class="One_Topleft">
-						<span>全部商品 </span>
+    <div class="one_sousuo">
+        <div class="one_search_top">
+            <div class="one_top_left">
+                <a href="http://gulimall.com" class="one_left_logo"><img src="/cart/img/logo1.jpg"></a>
+                <a href="/cart/#" class="one_left_link">购物车</a>
+            </div>
+            <div class="one_top_right">
+                <input type="text" class="one_right_txt" placeholder="" onfocus="this.placeholder=''"
+                       onblur="this.placeholder='' ">
+                <input type="button" value="搜索" class="one_right_btn">
+            </div>
+        </div>
+        <div class="one_search_load" th:if="${userId}==null">
+            <img src="/cart/img/shop_07.jpg" class="one_load_wraing">
+            <span>您还没有登录！登录后购物车的商品将保存到您账号中</span>
+            <a href="/cart/#"><input type="button" onclick="login()" value="立即登录" class="one_load_btn"></a>
+        </div>
+    </div>
+</div>
+<div class="One_BdyShop">
+    <div class="OneBdy_box">
+        <div class="One_tabTop">
+            <div class="One_Topleft">
+                <span>全部商品 </span>
 
-					</div>
+            </div>
 
-				</div>
-				<div class="One_ShopTop">
-					<ul>
-						<li><input type="checkbox" class="allCheck">全选</li>
-						<li>商品</li>
-						<li>单价</li>
-						<li>数量</li>
-						<li>小计</li>
-						<li>操作</li>
-					</ul>
-				</div>
+        </div>
+        <div class="One_ShopTop">
+            <ul>
+                <li><input type="checkbox" class="allCheck">全选</li>
+                <li>商品</li>
+                <li>单价</li>
+                <li>数量</li>
+                <li>小计</li>
+                <li>操作</li>
+            </ul>
+        </div>
 
-				<div class="One_ShopCon">
-					<ul>
-						<li th:each="cartInfo:${cartList}">
-							<div> </div>
-
-							<div>
-								<ol>
-									<li><input type="checkbox" class="check" th:value="${cartInfo.skuId}" onchange="checkSku(this)" th:checked="(${cartInfo.isChecked}==1)?'true':'false'" /></li>
-									<li>
-										<dt><img th:src="|/cart/${cartInfo.imgUrl}|" src="/cart/img\shop1.jpg" alt=""></dt>
-										<dd th:onclick="'toItem('+${cartInfo.skuId}+')'">
-											<p>
-												<span th:text="${cartInfo.skuName}">TCL 55A950C 55英寸32核</span>
-											</p>
-										</dd>
-									</li>
-									<li>
-										<p class="dj" th:text="'￥'+${cartInfo.skuPrice}">4599.00</p>
-									</li>
-									<li>
-										<p>
-											<span>-</span>
-											<span th:text="${cartInfo.skuNum}">5</span>
-											<span>+</span>
-										</p>
-									</li>
-									<li style="font-weight:bold">
-										<p class="zj" th:text="'￥'+${cartInfo.totalPrice}">￥22995.00</p>
-									</li>
-									<li>
-										<p>删除</p>
-									</li>
-								</ol>
-							</div>
-						</li>
-						<!--<li>
+        <div class="One_ShopCon">
+            <ul>
+                <li th:each="item:${cartList.items}">
                     <div>
                     </div>
                     <div>
                         <ol>
-                            <li><input type="checkbox"  class="check"></li>
+                            <li><input type="checkbox" th:checked="${item.checked}" class="check"></li>
                             <li>
-                                <dt><img src="/cart/img\shop1.jpg" alt=""></dt>
+                                <dt><img th:src="${item.img}" alt=""></dt>
                                 <dd>
                                     <p>
-
-                                        <span>TCL 55A950C 55英寸32核</span>
-                                        <span>尺码: 55时 超薄曲面 人工智能</span>
+                                        <span th:each="attr:${item.skuAttr}" th:text="${attr}">尺码: 55时 超薄曲面 人工智能</span>
                                     </p>
-                                    <p>人工智能 HDR曲面超薄4K电视金属机</p>
 
                                 </dd>
                             </li>
                             <li>
-                                <p class="dj">￥4599.00</p>
+                                <p class="dj" >￥[[${item.price}]]</p>
 
                             </li>
                             <li>
-                                <p>
+                                <p style="width:70px">
                                     <span>-</span>
-                                    <span>5</span>
+                                    <span th:text="${item.count}">5</span>
                                     <span>+</span>
                                 </p>
 
                             </li>
-                            <li style="font-weight:bold"><p class="zj">￥22995.00</p></li>
+                            <li style="font-weight:bold"><p class="zj">￥[[${item.totalPrice}]]</p></li>
                             <li>
                                 <p>删除</p>
 
                             </li>
                         </ol>
                     </div>
-                </li>-->
+                </li>
 
-					</ul>
-				</div>
-				<div class="One_ShopFootBuy fix1">
-					<div>
-						<ul>
-							<li><input type="checkbox" class="allCheck"><span>全选</span></li>
-							<li>删除选中的商品</li>
-							<li>移到我的关注</li>
-							<li>清除下柜商品</li>
-						</ul>
-					</div>
-					<div>
-						<font style="color:#e64346;font-weight:bold;" class="sumNum"> </font>&nbsp;
+            </ul>
+        </div>
+        <div class="One_ShopFootBuy fix1">
+            <div>
+                <ul>
+                    <li><input type="checkbox" class="allCheck"><span>全选</span></li>
+                    <li>删除选中的商品</li>
+                    <li>移到我的关注</li>
+                    <li>清除下柜商品</li>
+                </ul>
+            </div>
+            <div>
+                <font style="color:#e64346;font-weight:bold;" class="sumNum"> </font>&nbsp;
 
-						<ul>
-							<li><img src="/cart/img/buyNumleft.png" alt=""></li>
-							<li><img src="/cart/img/buyNumright.png" alt=""></li>
-						</ul>
-					</div>
-					<div>
-						<ol>
-							<li>总价:<span style="color:#e64346;font-weight:bold;font-size:16px;" class="fnt">￥0.00</span> </li>
+                <ul>
+                    <li><img src="/cart/img/buyNumleft.png" alt=""></li>
+                    <li><img src="/cart/img/buyNumright.png" alt=""></li>
+                </ul>
+            </div>
+            <div>
+                <ol>
+                    <li>总价:<span style="color:#e64346;font-weight:bold;font-size:16px;" class="fnt">￥[[${cartList.totalPrice}]]</span>
+                    </li>
 
-						</ol>
-					</div>
-					<div><button onclick="toTrade()" type="button">去结算</button></div>
-				</div>
-			</div>
-		</div>
+                </ol>
+            </div>
+            <div>
+                <button onclick="toTrade()" type="button">去结算</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-		<div class="One_isDel">
-			<p>
-				<span>删除</span><span><img src="/cart/img/错误.png" alt=""></span>
-			</p>
-			<div>
-				<dl>
-					<dt><img src="/cart/img/感叹三角形 (2).png" alt=""></dt>
-					<dd>
-						<li>删除商品？</li>
-						<li>您可以选择移到关注，或删除商品。</li>
-					</dd>
-				</dl>
-			</div>
-			<div>
-				<button type="button">删除</button>
+<div class="One_isDel">
+    <p>
+        <span>删除</span><span><img src="/cart/img/错误.png" alt=""></span>
+    </p>
+    <div>
+        <dl>
+            <dt><img src="/cart/img/感叹三角形 (2).png" alt=""></dt>
+            <dd>
+                <li>删除商品？</li>
+                <li>您可以选择移到关注，或删除商品。</li>
+            </dd>
+        </dl>
+    </div>
+    <div>
+        <button type="button">删除</button>
 
-			</div>
-		</div>
-		<div class="One_moveGzIfNull">
-			<p>
-				<span>删除</span><span><img src="/cart/img/错误.png" alt=""></span>
-			</p>
-			<dl>
-				<dt><img src="/cart/img/感叹三角形 (2).png" alt=""></dt>
-				<dd>请至少选中一件商品！</dd>
-			</dl>
-		</div>
-		<div class="One_moveMyGz">
-			<p>
-				<span>删除</span><span><img src="/cart/img/错误.png" alt=""></span>
-			</p>
-			<div>
-				<dl>
-					<dt><img src="/cart/img/感叹三角形 (2).png" alt=""></dt>
-					<dd>
-						<li>移到关注</li>
-						<li>移动后选中商品将不再购物车中显示</li>
-					</dd>
-				</dl>
-			</div>
-			<div>
-				<button type="button">确定</button>
-				<button type="button">取消</button>
-			</div>
-		</div>
-		<div class="One_clearShop">
-			<p>
-				<span>提示</span><span><img src="/cart/img/错误.png" alt=""></span>
-			</p>
-			<dl>
-				<dt><img src="/cart/img/感叹三角形 (2).png" alt=""></dt>
-				<dd>没有下柜商品!</dd>
-			</dl>
-		</div>
-		<!--底部-->
+    </div>
+</div>
+<div class="One_moveGzIfNull">
+    <p>
+        <span>删除</span><span><img src="/cart/img/错误.png" alt=""></span>
+    </p>
+    <dl>
+        <dt><img src="/cart/img/感叹三角形 (2).png" alt=""></dt>
+        <dd>请至少选中一件商品！</dd>
+    </dl>
+</div>
+<div class="One_moveMyGz">
+    <p>
+        <span>删除</span><span><img src="/cart/img/错误.png" alt=""></span>
+    </p>
+    <div>
+        <dl>
+            <dt><img src="/cart/img/感叹三角形 (2).png" alt=""></dt>
+            <dd>
+                <li>移到关注</li>
+                <li>移动后选中商品将不再购物车中显示</li>
+            </dd>
+        </dl>
+    </div>
+    <div>
+        <button type="button">确定</button>
+        <button type="button">取消</button>
+    </div>
+</div>
+<div class="One_clearShop">
+    <p>
+        <span>提示</span><span><img src="/cart/img/错误.png" alt=""></span>
+    </p>
+    <dl>
+        <dt><img src="/cart/img/感叹三角形 (2).png" alt=""></dt>
+        <dd>没有下柜商品!</dd>
+    </dl>
+</div>
+<!--底部-->
 
-		<div class="one_footer">
+<div class="one_footer">
 
-		</div>
-	</body>
-	<script src="/cart/js/index.js" charset="utf-8"></script>
-	<script type="text/javascript">
+</div>
+</body>
+<script src="/cart/js/index.js" charset="utf-8"></script>
+<script type="text/javascript">
 		function toTrade() {
-			window.location.href = "http://cart.gmall.com:8087/toTrade";
+			window.location.href = "http://order.gulimall.com/toTrade";
 		}
 
 		function toItem(skuId) {
@@ -798,5 +764,6 @@
 		}).mouseout(function() {
 			$(this).children("p").children("img").attr("src", "img/one_mian_gwc1.png")
 		})
-	</script>
+
+</script>
 </html>

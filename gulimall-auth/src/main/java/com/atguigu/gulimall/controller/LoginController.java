@@ -62,9 +62,9 @@ public class LoginController {
         if (login.getCode() != 0) {
             return "redirect:http://auth.gulimall.com/reg.html";
         }
-        String s = JSON.toJSONString(login.get(AuthConstant.LOGIN_USER));
-        OauthMember oauthMember = JSON.parseObject(s, OauthMember.class);
-        session.setAttribute(AuthConstant.LOGIN_USER,oauthMember);
+//        String s = JSON.toJSONString(login.get(AuthConstant.LOGIN_USER));
+//        OauthMember oauthMember = JSON.parseObject(s, OauthMember.class);
+//        session.setAttribute(AuthConstant.LOGIN_USER,oauthMember);
 
         return "redirect:http://gulimall.com";
     }

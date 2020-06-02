@@ -41,12 +41,10 @@ public class UserStatusInterceptor implements HandlerInterceptor {
                 }
             }
         }
-
         if (StringUtils.isEmpty(userStatusTo.getUserKey())) {
             String userKey = UUID.randomUUID().toString();
             userStatusTo.setUserKey(userKey);
         }
-
         userStatus.set(userStatusTo);
 
         return true;

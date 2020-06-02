@@ -16,5 +16,7 @@ import java.util.Map;
 public interface MemberReceiveAddressService extends IService<MemberReceiveAddressEntity> {
 
     PageUtils queryPage(Map<String, Object> params);
+
+    MemberReceiveAddressEntity getByMemberId(Long id);
 }
 

@@ -1,7 +1,33 @@
 package com.atguigu.gulimall.order.service.impl;
 
+import com.atguigu.common.exception.NotEnoughStockException;
+import com.atguigu.common.to.SkuStockTo;
+import com.atguigu.common.utils.R;
+import com.atguigu.common.vo.OauthMember;
+import com.atguigu.gulimall.order.constan.OrderConstant;
+import com.atguigu.gulimall.order.entity.OrderItemEntity;
+import com.atguigu.gulimall.order.enume.OrderStatusEnum;
+import com.atguigu.gulimall.order.feign.CartFeignService;
+import com.atguigu.gulimall.order.feign.MemberFeignService;
+import com.atguigu.gulimall.order.feign.ProductFeignService;
+import com.atguigu.gulimall.order.feign.WareFeignService;
+import com.atguigu.gulimall.order.interceptor.OrderWebInterceptor;
+import com.atguigu.gulimall.order.service.OrderItemService;
+import com.atguigu.gulimall.order.to.OrderCreateTo;
+import com.atguigu.gulimall.order.vo.*;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
-import java.util.Map;
+
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -11,10 +37,34 @@ import com.atguigu.common.utils.Query;
 import com.atguigu.gulimall.order.dao.OrderDao;
 import com.atguigu.gulimall.order.entity.OrderEntity;
 import com.atguigu.gulimall.order.service.OrderService;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
 
 
 @Service("orderService")
 public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> implements OrderService {
+
+    ThreadLocal<SubmitOrderVo> submitOrderVoThreadLocal = new ThreadLocal<>();
+
+    @Autowired
+    OrderItemService orderItemService;
+
+    @Autowired
+    MemberFeignService memberFeignService;
+
+    @Autowired
+    CartFeignService cartFeignService;
+
+    @Autowired
+    WareFeignService wareFeignService;
+
+    @Autowired
+    StringRedisTemplate redisTemplate;
+
+    @Autowired
+    ProductFeignService productFeignService;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -24,6 +74,192 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         );
 
         return new PageUtils(page);
+    }
+
+    @Transactional
+    @Override
+    public OrderConfirmVo confirmOrder() throws ExecutionException, InterruptedException {
+        OrderConfirmVo confirmVo = new OrderConfirmVo();
+        OauthMember user = OrderWebInterceptor.loginUser.get();
+
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+
+        CompletableFuture<Void> addressFuture = CompletableFuture.runAsync(() -> {
+            RequestContextHolder.setRequestAttributes(requestAttributes);//防止丢失请求上下文
+//        住址信息
+            ReceiverAddrVo receiverAddrVo = memberFeignService.memberAddressInfo(user.getId());
+            confirmVo.setAddress(Arrays.asList(receiverAddrVo));
+        });
+
+        CompletableFuture<Void> itemsFuture = CompletableFuture.runAsync(() -> {
+            RequestContextHolder.setRequestAttributes(requestAttributes);//防止丢失请求上下文
+//        购物车商品列表
+            List<OrderItemVo> orderItemVos = cartFeignService.cartItems();
+            confirmVo.setItems(orderItemVos);
+        }).thenRunAsync(()->{
+            List<Long> skuIds = confirmVo.getItems().stream().map(item -> item.getSkuId()).collect(Collectors.toList());
+            List<SkuStockTo> skusHaveStock = wareFeignService.getSkusHaveStock(skuIds);
+            Map<Long, Boolean> stockMap = skusHaveStock.stream().collect(Collectors.toMap(SkuStockTo::getSkuId, SkuStockTo::getHasStock));
+            confirmVo.setStocks(stockMap);
+        });
+
+//        会员信息
+        confirmVo.setIntegration(user.getIntegration());
+
+//        令牌
+        String token = UUID.randomUUID().toString().replace("-", "");
+        redisTemplate.opsForValue().set(OrderConstant.ORDER_TOKEN_KEY_PREFIX+user.getId(),token,30, TimeUnit.MINUTES);
+        confirmVo.setOrderToken(token);
+        CompletableFuture.allOf(itemsFuture, addressFuture).get();
+        return confirmVo;
+    }
+
+    @Transactional
+    @Override
+    public SubmitOrderResponseVo submitOrder(SubmitOrderVo vo) {
+        SubmitOrderResponseVo responseVo = new SubmitOrderResponseVo();
+        submitOrderVoThreadLocal.set(vo);
+        OauthMember user = OrderWebInterceptor.loginUser.get();
+        String redisToken = redisTemplate.opsForValue().get(OrderConstant.ORDER_TOKEN_KEY_PREFIX + user.getId());
+        String orderToken = vo.getOrderToken();
+//        lua脚本执行原子操作
+        String script = "if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end";
+        Long execute = redisTemplate.execute(new DefaultRedisScript<Long>(script,Long.class), Arrays.asList(OrderConstant.ORDER_TOKEN_KEY_PREFIX + user.getId().toString()), orderToken);
+        if (execute == 0) {
+//          验证失败
+            responseVo.setCode(1L);
+        }else{
+//          验证成功
+//          创建订单，验证令牌，锁库存，验证价格
+            OrderCreateTo createTo = createOrder();
+//          验价
+            BigDecimal payPriceFromFront = vo.getPayPrice();
+            BigDecimal payPriceFromBack = createTo.getOrder().getPayAmount();
+            if(Math.abs(payPriceFromBack.subtract(payPriceFromFront).doubleValue())<0.01){
+//              金额对比正确
+//              保存订单
+                saveOrder(createTo);
+//              库存锁定
+                LockOrderItemsVo lockOrderItemsVo = new LockOrderItemsVo();
+                lockOrderItemsVo.setOrderSn(createTo.getOrder().getOrderSn());
+                List<OrderItemVo> collect = createTo.getOrderItems().stream().map(item -> {
+                    OrderItemVo orderItemVo = new OrderItemVo();
+                    orderItemVo.setSkuId(item.getSkuId());
+                    orderItemVo.setCount(item.getSkuQuantity());
+                    orderItemVo.setTitle(item.getSkuName());
+                    return orderItemVo;
+                }).collect(Collectors.toList());
+                lockOrderItemsVo.setLockedItems(collect);
+                R r = wareFeignService.lockStock(lockOrderItemsVo);
+                if (r.getCode() == 0) {
+//                    锁库存成功
+                    responseVo.setOrder(createTo.getOrder());
+                } else {
+                    responseVo.setCode(3L);
+                    throw new NotEnoughStockException(null);
+                }
+
+            }else {
+//               金额对比失败
+                responseVo.setCode(2L);
+            }
+        }
+        System.out.println(responseVo);
+        return responseVo;
+
+    }
+
+    private void saveOrder(OrderCreateTo createTo) {
+        createTo.getOrder().setModifyTime(new Date());
+        this.save(createTo.getOrder());
+        orderItemService.saveBatch(createTo.getOrderItems());
+    }
+
+    private OrderCreateTo createOrder() {
+        OrderCreateTo orderCreateTo = new OrderCreateTo();
+        String orderSn = IdWorker.getTimeId();
+//      创建OrderEntity
+        OrderEntity orderEntity = buildOrderEntity(orderSn);
+//      创建orderItemEntiy
+        List<OrderItemEntity> orderItemEntities = buildOrderItems(orderSn);
+//      计算价格
+        computePrice(orderEntity,orderItemEntities);
+        orderCreateTo.setOrder(orderEntity);
+        orderCreateTo.setOrderItems(orderItemEntities);
+        orderCreateTo.setPayPrice(orderEntity.getPayAmount());
+
+        return orderCreateTo;
+    }
+
+    private void computePrice(OrderEntity orderEntity, List<OrderItemEntity> orderItemEntities) {
+        BigDecimal total = new BigDecimal("0.00");
+        for (OrderItemEntity item : orderItemEntities) {
+            BigDecimal itemRealAmount = item.getRealAmount();
+            total = total.add(itemRealAmount);
+        }
+        orderEntity.setPayAmount(total);
+
+    }
+
+    private OrderEntity buildOrderEntity(String orderSn) {
+        OrderEntity orderEntity = new OrderEntity();
+        orderEntity.setOrderSn(orderSn);
+        SubmitOrderVo submitVo = submitOrderVoThreadLocal.get();
+//      TODO: 设置收货信息
+//        远程调用
+        orderEntity.setReceiverCity(submitVo.getAddrId().toString());
+        orderEntity.setReceiverPostCode(submitVo.getAddrId().toString());
+        orderEntity.setReceiverRegion(submitVo.getAddrId().toString());
+
+        orderEntity.setStatus(OrderStatusEnum.CREATE_NEW.getCode());
+        orderEntity.setAutoConfirmDay(7);
+        return orderEntity;
+    }
+
+    private List<OrderItemEntity> buildOrderItems(String orderSn) {
+//        重新从购物车取出当前用户所有商品
+        List<OrderItemVo> orderItemVos = cartFeignService.cartItems();
+        if (orderItemVos != null && orderItemVos.size() > 0) {
+            List<OrderItemEntity> orderItemEntities = orderItemVos.stream().map(orderItemVo ->{
+                OrderItemEntity orderItemEntity = buildOrderItem(orderItemVo);
+                orderItemEntity.setOrderSn(orderSn);
+                return orderItemEntity;
+            }).collect(Collectors.toList());
+
+            return orderItemEntities;
+        }
+
+        return null;
+    }
+
+    private OrderItemEntity buildOrderItem(OrderItemVo vo) {
+        OrderItemEntity orderItemEntity = new OrderItemEntity();
+
+        Long skuId = vo.getSkuId();
+        R r = productFeignService.getSpuBySkuId(skuId);
+        SpuInfoVo spuInfo = r.getDataInType("spuInfo", SpuInfoVo.class);
+        orderItemEntity.setSpuId(spuInfo.getId());
+        orderItemEntity.setSpuName(spuInfo.getSpuName());
+        orderItemEntity.setSpuBrand(spuInfo.getBrandId().toString());
+        orderItemEntity.setCategoryId(spuInfo.getCatalogId());
+
+//        sku info
+        orderItemEntity.setSkuId(vo.getSkuId());
+        orderItemEntity.setSkuName(vo.getTitle());
+        orderItemEntity.setSkuAttrsVals(StringUtils.collectionToDelimitedString(vo.getSkuAttr(),";"));
+        orderItemEntity.setSkuQuantity(vo.getCount());
+        orderItemEntity.setSkuPrice(vo.getPrice());
+        orderItemEntity.setSkuPic(vo.getImg());
+
+//        积分
+        orderItemEntity.setGiftGrowth(vo.getPrice().intValue());
+        orderItemEntity.setGiftIntegration(vo.getPrice().intValue());
+
+//        价格
+        BigDecimal real = orderItemEntity.getSkuPrice().multiply(new BigDecimal(vo.getCount()));
+        orderItemEntity.setRealAmount(real);
+
+        return orderItemEntity;
     }
 
 }

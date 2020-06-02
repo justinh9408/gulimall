@@ -8,6 +8,7 @@
 
 package com.atguigu.common.utils;
 
+import com.alibaba.fastjson.JSON;
 import org.apache.http.HttpStatus;
 
 import java.util.HashMap;
@@ -25,6 +26,13 @@ public class R extends HashMap<String, Object> {
 	public R() {
 		put("code", 0);
 		put("msg", "success");
+	}
+
+	public <T> T getDataInType(String key, Class<T> tClass) {
+		String jsonString = JSON.toJSONString(this.get(key));
+		T t = JSON.parseObject(jsonString, tClass);
+
+		return t;
 	}
 	
 	public static R error() {
