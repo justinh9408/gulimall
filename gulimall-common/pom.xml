@@ -62,27 +62,18 @@
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-seata</artifactId>
+        </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
             <version>2.0.1.Final</version>
         </dependency>
 
-
     </dependencies>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.alibaba.cloud</groupId>
-                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
-                <version>2.1.0.RELEASE</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <build>
         <plugins>
@@ -98,3 +89,10 @@
         </plugins>
     </build>
 </project>
+<!--org.springframework.beans.factory.BeanCreationException:
+ Error creating bean with name 'globalTransactionScanner' defined in class path resource [com/alibaba/cloud/seata/GlobalTransactionAutoConfiguration.class]:
+  Bean instantiation via factory method failed; nested exception is org.springframework.beans.BeanInstantiationException:
+   Failed to instantiate [io.seata.spring.annotation.GlobalTransactionScanner]:
+   Factory method 'globalTransactionScanner' threw exception;
+ nested exception is io.seata.common.exception.NotSupportYetException: not support register type: null
+-->

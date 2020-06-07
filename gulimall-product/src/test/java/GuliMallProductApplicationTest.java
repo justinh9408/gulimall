@@ -46,6 +46,8 @@ public class GuliMallProductApplicationTest {
 
     @Autowired
     SkuSaleAttrValueService skuSaleAttrValueService;
+
+
     @Test
     public void test() {
         List<SkuSaleAttrVo> values = skuSaleAttrValueService.findAllAttrValuesInSpu((long) 1);

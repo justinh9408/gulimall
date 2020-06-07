@@ -2,8 +2,11 @@ package com.atguigu.gulimall.order.service.impl;
 
 import com.atguigu.common.exception.NotEnoughStockException;
 import com.atguigu.common.to.SkuStockTo;
+import com.atguigu.common.to.mq.OrderTo;
+import com.atguigu.common.to.mq.SecKillOrderTo;
 import com.atguigu.common.utils.R;
 import com.atguigu.common.vo.OauthMember;
+import com.atguigu.common.vo.OrderWithItemsVo;
 import com.atguigu.gulimall.order.constan.OrderConstant;
 import com.atguigu.gulimall.order.entity.OrderItemEntity;
 import com.atguigu.gulimall.order.enume.OrderStatusEnum;
@@ -16,6 +19,10 @@ import com.atguigu.gulimall.order.service.OrderItemService;
 import com.atguigu.gulimall.order.to.OrderCreateTo;
 import com.atguigu.gulimall.order.vo.*;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import io.seata.spring.annotation.GlobalTransactional;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -43,6 +50,19 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
 
+/**
+ * 本地事务失效问题：
+ * 同一个对象内事务方法互调默认失败，原因：绕过了代理对象，事务采用代理对象来控制
+ * 解决：使用代理对象调用事务方法
+ * 1) 引入aop-starter，采用aspectJ
+ * 2）加入EnableAspectJAutoProxy(exposeProxy=true)
+ * 3) 本类互调
+ * OrderServiceImpl orderService = (OrderServiceImpl)AopContext.currentProxy()
+ * public void a(){
+ *     orderService.b()
+ *     orderService.c()
+ * }
+ */
 @Service("orderService")
 public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> implements OrderService {
 
@@ -65,6 +85,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
     @Autowired
     ProductFeignService productFeignService;
+
+    @Autowired
+    RabbitTemplate rabbitTemplate;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -114,15 +137,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         return confirmVo;
     }
 
+//    @GlobalTransactional
     @Transactional
     @Override
     public SubmitOrderResponseVo submitOrder(SubmitOrderVo vo) {
         SubmitOrderResponseVo responseVo = new SubmitOrderResponseVo();
         submitOrderVoThreadLocal.set(vo);
         OauthMember user = OrderWebInterceptor.loginUser.get();
-        String redisToken = redisTemplate.opsForValue().get(OrderConstant.ORDER_TOKEN_KEY_PREFIX + user.getId());
         String orderToken = vo.getOrderToken();
-//        lua脚本执行原子操作
+//        lua脚本执行原子操作,防止重复提交
         String script = "if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) else return 0 end";
         Long execute = redisTemplate.execute(new DefaultRedisScript<Long>(script,Long.class), Arrays.asList(OrderConstant.ORDER_TOKEN_KEY_PREFIX + user.getId().toString()), orderToken);
         if (execute == 0) {
@@ -150,6 +173,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                     return orderItemVo;
                 }).collect(Collectors.toList());
                 lockOrderItemsVo.setLockedItems(collect);
+//                锁库存
                 R r = wareFeignService.lockStock(lockOrderItemsVo);
                 if (r.getCode() == 0) {
 //                    锁库存成功
@@ -165,7 +189,89 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             }
         }
         System.out.println(responseVo);
+//        int a = 10/0;
+//      延时关单
+        try {
+            rabbitTemplate.convertAndSend("order-event-exchange", "order.create.order", responseVo.getOrder());
+        } catch (AmqpException e) {
+            e.printStackTrace();
+//            TODO: 记录消息到数据库，定时重发消息
+        }
+
         return responseVo;
+    }
+
+    @Override
+    public OrderEntity getByOrderSn(String orderSn) {
+        return this.baseMapper.selectOne(new QueryWrapper<OrderEntity>().eq("order_sn",orderSn));
+    }
+
+    @Override
+    public void releaseOrder(OrderEntity orderEntity) {
+//        最新order信息
+        OrderEntity byId = this.getById(orderEntity.getId());
+        if (byId != null && byId.getStatus() == OrderStatusEnum.CREATE_NEW.getCode()) {
+            OrderEntity update = new OrderEntity();
+            update.setId(orderEntity.getId());
+            update.setStatus(OrderStatusEnum.CANCLED.getCode());
+            this.updateById(update);
+//        TODO 确认释放库存 routing-key:order.release.other.#
+            OrderTo orderTo = new OrderTo();
+            BeanUtils.copyProperties(byId,orderTo);
+//            关单后立马发消息给库存解锁
+            rabbitTemplate.convertAndSend("order-event-exchange","order.release.other.stock",orderTo);
+        }
+    }
+
+    @Override
+    public List<OrderWithItemsVo> findOrdersWithItems(Map<String, Object> map) {
+        OauthMember oauthMember = OrderWebInterceptor.loginUser.get();
+        IPage<OrderEntity> page = this.page(
+                new Query<OrderEntity>().getPage(map),
+                new QueryWrapper<OrderEntity>().eq("member_id", oauthMember.getId())
+        );
+        List<OrderEntity> orderEntities = page.getRecords();
+        List<OrderWithItemsVo> withItemsVos = orderEntities.stream().map(orderEntity -> {
+            OrderWithItemsVo orderWithItemsVo = new OrderWithItemsVo();
+            BeanUtils.copyProperties(orderEntity, orderWithItemsVo);
+            String orderSn = orderEntity.getOrderSn();
+            List<OrderItemEntity> itemEntities = orderItemService.findItemsBySn(orderSn);
+            List<com.atguigu.common.vo.OrderItemVo> orderItemVos = itemEntities.stream().map(item -> {
+                com.atguigu.common.vo.OrderItemVo itemVo = new com.atguigu.common.vo.OrderItemVo();
+                BeanUtils.copyProperties(item, itemVo);
+                return itemVo;
+            }).collect(Collectors.toList());
+            orderWithItemsVo.setItems(orderItemVos);
+            return orderWithItemsVo;
+        }).collect(Collectors.toList());
+
+        return withItemsVos;
+    }
+
+    @Override
+    public void payed(String sn) {
+        OrderEntity update = new OrderEntity();
+        OrderEntity byOrderSn = this.getByOrderSn(sn);
+        update.setId(byOrderSn.getId());
+        update.setStatus(OrderStatusEnum.PAYED.getCode());
+        this.updateById(update);
+    }
+
+    @Override
+    public void createSecKillOrder(SecKillOrderTo secKillOrder) {
+        OrderEntity orderEntity = new OrderEntity();
+        orderEntity.setCreateTime(new Date());
+        orderEntity.setMemberId(secKillOrder.getMemberId());
+        orderEntity.setOrderSn(secKillOrder.getOrderSn());
+        orderEntity.setPayAmount(secKillOrder.getSeckillPrice());
+        orderEntity.setTotalAmount(secKillOrder.getSeckillPrice());
+        this.save(orderEntity);
+
+        OrderItemEntity orderItemEntity = new OrderItemEntity();
+        orderItemEntity.setOrderSn(secKillOrder.getOrderSn());
+        orderItemEntity.setSkuQuantity(secKillOrder.getNum().intValue());
+        orderItemEntity.setRealAmount(secKillOrder.getSeckillPrice());
+        orderItemService.save(orderItemEntity);
 
     }
 
@@ -202,7 +308,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     }
 
     private OrderEntity buildOrderEntity(String orderSn) {
+        OauthMember oauthMember = OrderWebInterceptor.loginUser.get();
+
         OrderEntity orderEntity = new OrderEntity();
+        orderEntity.setMemberId(oauthMember.getId());
         orderEntity.setOrderSn(orderSn);
         SubmitOrderVo submitVo = submitOrderVoThreadLocal.get();
 //      TODO: 设置收货信息
@@ -213,6 +322,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
         orderEntity.setStatus(OrderStatusEnum.CREATE_NEW.getCode());
         orderEntity.setAutoConfirmDay(7);
+        orderEntity.setCreateTime(new Date());
         return orderEntity;
     }
 

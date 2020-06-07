@@ -15,6 +15,10 @@ spring:
     store-type: redis
   application:
     name: gulimall-member
+  thymeleaf:
+    cache: false
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
 
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml

@@ -64,4 +64,10 @@ public class OrderWebController {
             return "redirect:http://order.gulimall.com/toTrade";
         }
     }
+
+    @GetMapping("/goPay")
+    public String payBill(String sn) {
+        orderService.payed(sn);
+        return "redirect:http://member.gulimall.com/orderList";
+    }
 }

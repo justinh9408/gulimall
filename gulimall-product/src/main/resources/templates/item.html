@@ -625,11 +625,18 @@
 								</div>
 							</div>
 							<div class="box-btns-two">
-<!--								http://cart.gulimall.com/addToCart-->
+								<!--								http://cart.gulimall.com/addToCart-->
 								<a href="#" id="addToCart" th:attr="skuId=${item.info.skuId}">
 									加入购物车
 								</a>
 							</div>
+							<div class="box-btns-two" th:if="${item.secKillSkuVo!=null}">
+								<a href="#" id="secKill"
+								   th:attr="skuId=${item.secKillSkuVo.skuId},sessionId=${item.secKillSkuVo.promotionSessionId},token=${item.secKillSkuVo.token},num=${item.secKillSkuVo.seckillCount}">
+									立即抢购
+								</a>
+							</div>
+
 							<div class="box-btns-three">
 								<img src="/item/img/e4ed3606843f664591ff1f68f7fda12d.png" alt="" /> 分享
 							</div>
@@ -1528,6 +1535,17 @@
 		let skuId = $(this).attr("skuId");
 		location.href="http://cart.gulimall.com/addToCart?skuId="+skuId+"&num="+numInput;
 		return false;
+	})
+
+	$("#secKill").click(function(){
+		let isLogin = [[${session.member!=null}]];
+		if(isLogin){
+			let killId = $(this).attr("sessionId")+"_"+$(this).attr("skuId");
+			let token = $(this).attr("token");
+			location.href="http://seckill.gulimall.com/kill?num=1&killId=" + killId + "&token=" + token;
+		}else{
+			alert("请登录");
+		}
 	})
 </script>
 </html>

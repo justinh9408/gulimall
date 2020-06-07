@@ -1,14 +1,12 @@
 package com.atguigu.gulimall.order.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
+import com.atguigu.common.vo.OrderWithItemsVo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.atguigu.gulimall.order.entity.OrderEntity;
 import com.atguigu.gulimall.order.service.OrderService;
@@ -29,6 +27,18 @@ import com.atguigu.common.utils.R;
 public class OrderController {
     @Autowired
     private OrderService orderService;
+
+    @PostMapping("/ordersWithItems")
+    List<OrderWithItemsVo> findOrdersWithItems(@RequestBody Map<String, Object> map){
+        List<OrderWithItemsVo> orders = orderService.findOrdersWithItems(map);
+        return orders;
+    }
+
+    @GetMapping("/sn/{orderSn}")
+    public R oderSn(@PathVariable("orderSn") String orderSn) {
+        OrderEntity orderEntity = orderService.getByOrderSn(orderSn);
+        return R.ok().put("order", orderEntity);
+    }
 
     /**
      * 列表

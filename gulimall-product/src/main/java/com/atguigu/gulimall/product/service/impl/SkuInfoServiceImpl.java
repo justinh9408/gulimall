@@ -1,10 +1,13 @@
 package com.atguigu.gulimall.product.service.impl;
 
+import com.atguigu.common.utils.R;
 import com.atguigu.gulimall.product.entity.SkuImagesEntity;
 import com.atguigu.gulimall.product.entity.SpuInfoDescEntity;
 import com.atguigu.gulimall.product.entity.SpuInfoEntity;
+import com.atguigu.gulimall.product.feign.SecKillFeignService;
 import com.atguigu.gulimall.product.service.*;
 import com.atguigu.gulimall.product.vo.ItemInfoVo;
+import com.atguigu.gulimall.product.vo.SecKillSkuVo;
 import com.atguigu.gulimall.product.vo.SkuSaleAttrVo;
 import com.atguigu.gulimall.product.vo.SpuAttrGroupVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +48,9 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
 
     @Autowired
     ThreadPoolExecutor executor;
+
+    @Autowired
+    SecKillFeignService secKillFeignService;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -148,7 +154,17 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
             infoVo.setSaleAttrs(saleAttrVos);
         }, executor);
 
-        CompletableFuture.allOf(imageFuture, spuDesFuture, attrGroupFuture, allAttrInSpuFuture).get();
+//        查找秒杀信息
+        CompletableFuture<Void> secKillFuture = infoFuture.thenAcceptAsync((res) -> {
+            R secKillR = secKillFeignService.getSeckillSkuInfo(skuId);
+            if (secKillR.getCode() == 0) {
+                SecKillSkuVo sku = secKillR.getDataInType("secKillSku", SecKillSkuVo.class);
+                infoVo.setSecKillSkuVo(sku);
+                System.out.println("秒杀商品: "+sku);
+            }
+        }, executor);
+
+        CompletableFuture.allOf(imageFuture, spuDesFuture, attrGroupFuture, allAttrInSpuFuture,secKillFuture).get();
 
         return infoVo;
     }

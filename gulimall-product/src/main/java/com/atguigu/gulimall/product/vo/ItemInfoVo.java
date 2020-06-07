@@ -24,4 +24,6 @@ public class ItemInfoVo {
 
     private List<SpuAttrGroupVo> spuAttrGroups;
 
+    private SecKillSkuVo secKillSkuVo;
+
 }

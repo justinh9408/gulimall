@@ -15,9 +15,13 @@ spring:
     name: gulimall-order
   rabbitmq:
     host: 192.168.56.10
+    virtual-host: /
     publisher-confirms: true
     publisher-returns: true
     template-mandatory: true
+    listener:
+      simple:
+        acknowledge-mode: manual
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
   thymeleaf:

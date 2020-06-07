@@ -20,7 +20,7 @@
         <dl>
           <dt><img src="/pay/img\saoyisao.png" alt=""></dt>
           <dd>
-            <span>订单提交成功，请尽快付款！订单号：70715901829</span>
+            <span>订单提交成功，请尽快付款！订单号：[[${submitResp.order.orderSn}]]</span>
             <span>应付金额<font>28.90</font>元</span>
           </dd>
           <dd>
@@ -89,7 +89,7 @@
               <input type="password"><span>忘记支付密码？</span>
             </li>
             <li>
-              <button>立即支付</button>
+              <a th:href="@{|/goPay?sn=${submitResp.order.orderSn}|}"><button>立即支付</button></a>
             </li>
           </ul>
         </div>

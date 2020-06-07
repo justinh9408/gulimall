@@ -1,5 +1,7 @@
 package com.atguigu.gulimall.order.service;
 
+import com.atguigu.common.to.mq.SecKillOrderTo;
+import com.atguigu.common.vo.OrderWithItemsVo;
 import com.atguigu.gulimall.order.vo.OrderConfirmVo;
 import com.atguigu.gulimall.order.vo.SubmitOrderResponseVo;
 import com.atguigu.gulimall.order.vo.SubmitOrderVo;
@@ -7,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.atguigu.common.utils.PageUtils;
 import com.atguigu.gulimall.order.entity.OrderEntity;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -24,5 +27,15 @@ public interface OrderService extends IService<OrderEntity> {
     OrderConfirmVo confirmOrder() throws ExecutionException, InterruptedException;
 
     SubmitOrderResponseVo submitOrder(SubmitOrderVo vo);
+
+    OrderEntity getByOrderSn(String orderSn);
+
+    void releaseOrder(OrderEntity orderEntity);
+
+    List<OrderWithItemsVo> findOrdersWithItems(Map<String, Object> map);
+
+    void payed(String sn);
+
+    void createSecKillOrder(SecKillOrderTo secKillOrder);
 }
 
